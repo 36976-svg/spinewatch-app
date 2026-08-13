@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>SpineWatch — ระบบคัดกรองภาวะกระดูกสันหลังคดเบื้องต้น</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F4F7FB; --surface:#FFFFFF; --ink:#101828; --ink-soft:#667085; --ink-faint:#98A2B3;
+    --primary:#1264C7; --primary-dark:#0B4A99; --primary-bg:#E9F1FD;
+    --line:#E4E9F0;
+    --good:#15803D; --good-bg:#E7F6EC;
+    --warn:#B45309; --warn-bg:#FDF2DD;
+    --risk:#C0261E; --risk-bg:#FCE9E7;
+    --auto:#6A4CC2; --auto-bg:#EFEAFA;
+    --radius-lg:22px; --radius-md:16px; --radius-sm:11px;
+    --shadow: 0 1px 2px rgba(16,24,40,.04), 0 10px 30px -12px rgba(16,24,40,.16);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;}
+  body{
+    background:linear-gradient(180deg,#EEF3FB 0%, #F4F7FB 220px, #F4F7FB 100%);
+    color:var(--ink); font-family:'Kanit',sans-serif; font-weight:400;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{font-family:'Kanit',sans-serif;margin:0;font-weight:600;}
+  .mono{font-variant-numeric:tabular-nums;}
+  #app{max-width:460px;margin:0 auto;min-height:100dvh;padding:0 0 40px;position:relative;}
+
+  /* header */
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 18px 6px;}
+  .brand{display:flex;align-items:center;gap:9px;}
+  .brand-mark{width:34px;height:34px;border-radius:10px;background:var(--primary);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow);}
+  .brand-mark svg{width:20px;height:20px;}
+  .brand-name{font-size:17px;font-weight:700;color:var(--ink);letter-spacing:.2px;}
+  .icon-btn{width:38px;height:38px;border-radius:11px;background:var(--surface);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--shadow);}
+  .icon-btn svg{width:18px;height:18px;}
+  .header-actions{display:flex;gap:8px;}
+
+  /* hero */
+  .hero{padding:14px 18px 4px;text-align:center;}
+  .hero-badge{display:inline-flex;align-items:center;gap:6px;background:var(--primary-bg);color:var(--primary-dark);font-size:12.5px;font-weight:600;padding:6px 13px;border-radius:999px;margin-bottom:14px;}
+  .hero h1{font-size:25px;line-height:1.35;color:var(--ink);}
+  .hero p{color:var(--ink-soft);font-size:14px;margin-top:8px;line-height:1.6;}
+
+  .illus-card{margin:20px 18px;background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:22px 18px;text-align:center;border:1px solid var(--line);}
+  .illus-card svg{width:130px;height:170px;}
+
+  .steps-row{display:flex;justify-content:space-between;padding:0 18px;margin:6px 0 4px;gap:8px;}
+  .step-pill{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 8px;text-align:center;}
+  .step-pill .n{width:24px;height:24px;border-radius:50%;background:var(--primary-bg);color:var(--primary-dark);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;}
+  .step-pill .t{font-size:11.5px;color:var(--ink-soft);line-height:1.4;}
+
+  .consent-row{display:flex;align-items:flex-start;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-md);padding:14px 16px;margin:18px 18px 0;}
+  .consent-row input{margin-top:2px;width:18px;height:18px;flex-shrink:0;accent-color:var(--primary);}
+  .consent-row span{font-size:12.5px;color:var(--ink-soft);line-height:1.6;}
+
+  .cta-wrap{padding:16px 18px 4px;}
+  .btn-cta{width:100%;background:var(--primary);color:#fff;border:none;padding:17px 20px;border-radius:16px;font-family:inherit;font-size:16.5px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:9px;cursor:pointer;box-shadow:0 12px 24px -10px rgba(18,100,199,.55);}
+  .btn-cta:disabled{background:#C3CBD6;box-shadow:none;cursor:not-allowed;}
+  .btn-cta svg{width:20px;height:20px;}
+  .cta-sub{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:9px;}
+  .cta-link{display:block;width:100%;background:none;border:none;color:var(--primary-dark);font-family:inherit;font-size:13.5px;font-weight:600;text-align:center;padding:13px 10px 4px;cursor:pointer;}
+  .cta-link:disabled{color:var(--ink-faint);cursor:not-allowed;}
+
+  .camera-screen{position:fixed;inset:0;background:#0B0F14;z-index:95;display:flex;flex-direction:column;overflow:hidden;}
+  .camera-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000;}
+  .camera-topbar{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:16px;z-index:2;}
+  .camera-topbar .icon-btn{background:rgba(16,24,40,.45);border:1px solid rgba(255,255,255,.25);color:#fff;backdrop-filter:blur(6px);}
+  .camera-guide{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:1;}
+  .camera-guide svg{width:64%;max-width:280px;opacity:.65;}
+  .camera-hint{position:absolute;left:0;right:0;bottom:128px;text-align:center;color:#fff;font-size:13px;padding:0 30px;text-shadow:0 1px 5px rgba(0,0,0,.6);z-index:2;}
+  .camera-bottom{position:absolute;left:0;right:0;bottom:0;padding:22px 20px calc(30px + env(safe-area-inset-bottom));display:flex;align-items:center;justify-content:center;z-index:2;}
+  .shutter-btn{width:74px;height:74px;border-radius:50%;background:#fff;border:5px solid rgba(255,255,255,.35);cursor:pointer;padding:0;}
+  .shutter-btn:active{transform:scale(0.93);}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;background:var(--primary);color:#fff;border:none;padding:12px 18px;border-radius:13px;font-family:inherit;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .btn.secondary{background:var(--surface);color:var(--primary-dark);border:1px solid var(--line);}
+  .btn.ghost{background:transparent;color:var(--ink-soft);border:none;}
+  .btn.block{width:100%;}
+  .btn:disabled{background:#C3CBD6;cursor:not-allowed;}
+
+  /* review screen */
+  .review-wrap{padding:16px 18px 100px;}
+  .canvas-card{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);border:1px solid var(--line);padding:12px;overflow:hidden;}
+  .canvas-wrap{position:relative;display:block;border-radius:14px;overflow:hidden;}
+  canvas{width:100%;display:block;touch-action:none;cursor:grab;}
+  .review-hint{display:flex;align-items:center;gap:8px;background:var(--auto-bg);color:var(--auto);font-size:12.5px;font-weight:500;padding:11px 14px;border-radius:12px;margin-top:12px;}
+  .review-hint.fail{background:var(--warn-bg);color:var(--warn);}
+  .review-hint svg{width:16px;height:16px;flex-shrink:0;}
+  .legend-row{display:flex;flex-wrap:wrap;gap:12px;padding:12px 6px 2px;font-size:11.5px;color:var(--ink-soft);}
+  .legend-row span{display:inline-flex;align-items:center;gap:5px;}
+  .legend-row i{width:9px;height:9px;border-radius:50%;display:inline-block;flex-shrink:0;}
+  .skip-row{display:flex;flex-direction:column;gap:9px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-md);padding:13px 15px;margin-top:12px;}
+  .skip-row label{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--ink-soft);cursor:pointer;}
+  .skip-row input{width:17px;height:17px;accent-color:var(--primary);flex-shrink:0;}
+  .review-actions{display:flex;gap:10px;margin-top:14px;}
+
+  .bottom-bar{position:sticky;bottom:0;left:0;right:0;background:linear-gradient(180deg,rgba(244,247,251,0),#F4F7FB 22%);padding:18px 18px 22px;margin-top:8px;}
+
+  .loading-screen{position:fixed;inset:0;background:rgba(16,24,40,.55);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;z-index:80;padding:20px;}
+  .loading-card{background:var(--surface);border-radius:var(--radius-lg);padding:32px 26px;text-align:center;max-width:300px;box-shadow:var(--shadow);}
+  .spinner-lg{width:44px;height:44px;border:3.5px solid var(--line);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .loading-card p{font-size:14px;color:var(--ink-soft);margin-top:4px;}
+
+  /* result popup */
+  .modal-bg{position:fixed;inset:0;background:rgba(16,24,40,.5);display:flex;align-items:flex-end;justify-content:center;z-index:90;}
+  @media(min-width:520px){ .modal-bg{align-items:center;} }
+  .result-sheet{background:var(--surface);width:100%;max-width:460px;border-radius:26px 26px 0 0;padding:26px 22px 26px;box-shadow:0 -10px 40px rgba(16,24,40,.25);max-height:88vh;overflow:auto;animation:slideup .25s ease;}
+  @media(min-width:520px){ .result-sheet{border-radius:26px;} }
+  @keyframes slideup{from{transform:translateY(30px);opacity:0;} to{transform:translateY(0);opacity:1;}}
+  .sheet-handle{width:38px;height:4px;background:var(--line);border-radius:99px;margin:0 auto 18px;}
+  .result-icon-wrap{width:88px;height:88px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;}
+  .result-icon-wrap svg{width:52px;height:68px;}
+  .result-title{text-align:center;font-size:20px;font-weight:700;}
+  .result-badge{display:block;text-align:center;font-size:12.5px;font-weight:600;margin-top:6px;}
+  .result-advice{background:var(--bg);border-radius:14px;padding:14px 16px;font-size:13.5px;color:var(--ink-soft);line-height:1.7;margin-top:16px;}
+  .pro-metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;}
+  .pro-metric{background:var(--bg);border-radius:12px;padding:11px 13px;}
+  .pro-metric .val{font-size:19px;font-weight:700;color:var(--primary-dark);}
+  .pro-metric .lbl{font-size:11px;color:var(--ink-soft);margin-top:1px;}
+  .pro-toggle-row{display:flex;align-items:center;justify-content:space-between;margin-top:16px;padding:10px 4px;}
+  .pro-toggle-row span{font-size:12.5px;color:var(--ink-soft);}
+  .trigger-reasons{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:10px;}
+  .reason-chip{display:inline-flex;align-items:center;font-size:11px;font-weight:600;padding:5px 10px;border-radius:999px;}
+  .reason-chip.warn{background:var(--warn-bg);color:var(--warn);}
+  .reason-chip.risk{background:var(--risk-bg);color:var(--risk);}
+  .switch{position:relative;width:40px;height:23px;background:var(--line);border-radius:99px;cursor:pointer;flex-shrink:0;}
+  .switch.on{background:var(--primary);}
+  .switch i{position:absolute;top:2.5px;left:2.5px;width:18px;height:18px;background:#fff;border-radius:50%;transition:transform .15s;box-shadow:0 1px 3px rgba(0,0,0,.3);}
+  .switch.on i{transform:translateX(17px);}
+  .sheet-actions{display:flex;gap:10px;margin-top:20px;}
+
+  /* history sheet */
+  .hist-row{display:flex;align-items:center;justify-content:space-between;padding:13px 4px;border-bottom:1px solid var(--line);}
+  .hist-row:last-child{border-bottom:none;}
+  .hist-left{display:flex;flex-direction:column;}
+  .hist-name{font-size:14px;font-weight:600;}
+  .hist-date{font-size:11.5px;color:var(--ink-faint);margin-top:1px;}
+  .badge{display:inline-flex;align-items:center;padding:5px 11px;border-radius:999px;font-size:11.5px;font-weight:600;}
+  .badge.good{background:var(--good-bg);color:var(--good);}
+  .badge.warn{background:var(--warn-bg);color:var(--warn);}
+  .badge.risk{background:var(--risk-bg);color:var(--risk);}
+  .empty-state{text-align:center;padding:50px 20px;color:var(--ink-faint);}
+  .empty-state svg{width:52px;height:52px;opacity:.5;margin-bottom:10px;}
+
+  footer.legal{padding:20px 26px 6px;text-align:center;font-size:11px;color:var(--ink-faint);line-height:1.7;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+// Shim for window.storage: the app was originally built for the Claude artifacts
+// runtime, which provides a window.storage key-value API. Outside that runtime
+// (e.g. running this file directly, or embedded via Streamlit) that API doesn't
+// exist, so we back it with localStorage here to keep save/load working.
+(function(){
+  if(window.storage) return;
+  const ns = 'spinewatch:';
+  function k(key, shared){ return ns + (shared ? 'shared:' : 'local:') + key; }
+  window.storage = {
+    async get(key, shared=false){
+      const raw = localStorage.getItem(k(key, shared));
+      if(raw === null) return null;
+      return { key, value: raw, shared };
+    },
+    async set(key, value, shared=false){
+      localStorage.setItem(k(key, shared), value);
+      return { key, value, shared };
+    },
+    async delete(key, shared=false){
+      const existed = localStorage.getItem(k(key, shared)) !== null;
+      localStorage.removeItem(k(key, shared));
+      return { key, deleted: existed, shared };
+    },
+    async list(prefix='', shared=false){
+      const full = ns + (shared ? 'shared:' : 'local:') + prefix;
+      const keys = [];
+      for(let i=0;i<localStorage.length;i++){
+        const lk = localStorage.key(i);
+        if(lk && lk.startsWith(full)) keys.push(lk.slice((ns + (shared?'shared:':'local:')).length));
+      }
+      return { keys, prefix, shared };
+    }
+  };
+})();
+</script>
+<script type="module">
+import { FilesetResolver, PoseLandmarker } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs";
+
+const S = {
+  view: 'home',
+  consent: false,
+  proMode: false,
+  scanning: false,
+  current: null,      // in-progress capture: {img, points, aiOk}
+  resultOpen: false,
+  historyOpen: false,
+  cases: [],
+  poseLandmarkerPromise: null,
+  settings: { angleAmber:0.5, angleRed:1.0, asymAmber:2, asymRed:3, shiftAmber:3, shiftRed:5 },
+  adminAuth: null,     // {salt, hash} loaded from shared storage, or null if not yet set up
+  isAdmin: false,      // in-memory session flag only, resets on page reload
+  authOpen: false,     // login / first-time setup modal
+  authError: '',
+  adminOpen: false,    // back-office settings panel
+  cameraOpen: false,   // in-app live camera view
+  cameraStream: null,
+  facingMode: 'environment',
+};
+
+function getPoseLandmarker(){
+  if(!S.poseLandmarkerPromise){
+    S.poseLandmarkerPromise = (async ()=>{
+      const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
+      const modelAssetPath = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task";
+      try{
+        return await PoseLandmarker.createFromOptions(vision, {
+          baseOptions:{ modelAssetPath, delegate:"GPU" }, runningMode:"IMAGE", numPoses:1
+        });
+      }catch(gpuErr){
+        console.warn('GPU delegate failed, falling back to CPU', gpuErr);
+        return await PoseLandmarker.createFromOptions(vision, {
+          baseOptions:{ modelAssetPath, delegate:"CPU" }, runningMode:"IMAGE", numPoses:1
+        });
+      }
+    })();
+    // if setup itself fails, allow a future call to retry instead of being stuck forever
+    S.poseLandmarkerPromise.catch(()=>{ S.poseLandmarkerPromise = null; });
+  }
+  return S.poseLandmarkerPromise;
+}
+function withTimeout(promise, ms){
+  return Promise.race([
+    promise,
+    new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')), ms))
+  ]);
+}
+
+/* storage */
+async function loadIndex(){ try{ const r=await window.storage.get('case-index'); S.cases=r?JSON.parse(r.value):[]; }catch(e){ S.cases=[]; } }
+async function saveIndex(){ try{ await window.storage.set('case-index', JSON.stringify(S.cases)); }catch(e){} }
+async function saveCaseFull(c){ try{ await window.storage.set('case:'+c.id, JSON.stringify(c)); }catch(e){} }
+async function loadCaseFull(id){ try{ const r=await window.storage.get('case:'+id); return r?JSON.parse(r.value):null; }catch(e){ return null; } }
+async function deleteCaseFull(id){ try{ await window.storage.delete('case:'+id); }catch(e){} }
+
+// clinical thresholds and the admin credential are stored as SHARED data: every visitor
+// of this deployed page reads/writes the same values, since criteria and staff login
+// must be consistent for the whole team rather than private per browser.
+async function loadClinicalSettings(){
+  try{ const r=await window.storage.get('clinical-settings', true); if(r) S.settings={...S.settings, ...JSON.parse(r.value)}; }catch(e){}
+}
+async function saveClinicalSettings(){
+  try{ await window.storage.set('clinical-settings', JSON.stringify(S.settings), true); }catch(e){}
+}
+async function loadAdminAuth(){
+  try{ const r=await window.storage.get('admin-auth', true); S.adminAuth = r? JSON.parse(r.value) : null; }catch(e){ S.adminAuth=null; }
+}
+async function saveAdminAuth(auth){
+  try{ await window.storage.set('admin-auth', JSON.stringify(auth), true); S.adminAuth=auth; }catch(e){}
+}
+
+/* lightweight password hashing (SHA-256 + random salt) via Web Crypto.
+   Note: this is a client-side deterrent suitable for keeping casual users out of the
+   settings panel — it is not enterprise-grade authentication, since this tool has
+   no server. Do not reuse this password for anything sensitive elsewhere. */
+function randomSaltHex(){ return Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b=>b.toString(16).padStart(2,'0')).join(''); }
+async function sha256Hex(str){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+async function hashPassword(password, salt){ return sha256Hex(salt+':'+password); }
+
+/* utils */
+function uid(){ return 'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function fmtDate(ts){ return new Date(ts).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
+function widthOf(a,b){ return Math.hypot(b.x-a.x,b.y-a.y)||1; }
+function tiltDeg(a,b){ return Math.atan2(Math.abs(b.y-a.y), Math.abs(b.x-a.x)||1)*180/Math.PI; }
+async function resizeImageFile(file, maxW){
+  // use createImageBitmap with imageOrientation so phone photos aren't tilted/rotated
+  // by ignored EXIF orientation data; fall back to plain <img> for older browsers.
+  try{
+    const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+    const scale = Math.min(1, maxW/bitmap.width);
+    const w = Math.round(bitmap.width*scale), h = Math.round(bitmap.height*scale);
+    const c = document.createElement('canvas'); c.width=w; c.height=h;
+    c.getContext('2d').drawImage(bitmap,0,0,w,h);
+    return { dataUrl:c.toDataURL('image/jpeg',0.78), w, h };
+  }catch(e){
+    return new Promise((resolve,reject)=>{
+      const img=new Image(); const reader=new FileReader();
+      reader.onload=ev=>{ img.onload=()=>{
+        const scale=Math.min(1,maxW/img.width);
+        const w=Math.round(img.width*scale), h=Math.round(img.height*scale);
+        const c=document.createElement('canvas'); c.width=w; c.height=h;
+        c.getContext('2d').drawImage(img,0,0,w,h);
+        resolve({dataUrl:c.toDataURL('image/jpeg',0.78), w, h});
+      }; img.onerror=reject; img.src=ev.target.result; };
+      reader.onerror=reject; reader.readAsDataURL(file);
+    });
+  }
+}
+function lerp(a,b,t){ return {x:a.x+(b.x-a.x)*t, y:a.y+(b.y-a.y)*t}; }
+// finds the vertical line that splits the head/hair in half, used as a reference to
+// measure how much the whole body leans sideways. Traces the silhouette's horizontal
+// center row by row from the top of the head down to the shoulder line; each row's
+// search starts from the *previous* row's center (not a fixed guess), so the line
+// follows the head even if it's not sitting directly above the shoulder midpoint —
+// which is exactly the case we want to detect.
+function findHeadMidline(imageData, bg, shoulderMid, shoulderWidth){
+  const startX = shoulderMid.x;
+  const searchBottom = Math.max(10, shoulderMid.y*0.55);
+  const hairTopY = scanColumnTopY(imageData, startX, 0, searchBottom, bg);
+  if(hairTopY===null) return null;
+  const yBottom = shoulderMid.y*0.78; // stop before the neck widens into the shoulders
+  const rows = 10;
+  let centerX = startX;
+  const maxOffset = Math.max(14, shoulderWidth*0.55);
+  const xs = [];
+  for(let i=0;i<=rows;i++){
+    const y = hairTopY + (yBottom-hairTopY)*(i/rows);
+    const leftX = findOuterEdgeX(imageData, y, centerX, -1, bg, maxOffset);
+    const rightX = findOuterEdgeX(imageData, y, centerX, +1, bg, maxOffset);
+    if(rightX-leftX > 6){ centerX = (leftX+rightX)/2; xs.push(centerX); }
+  }
+  if(!xs.length) return null;
+  const avgX = xs.reduce((a,b)=>a+b,0)/xs.length;
+  return { top:{x:avgX,y:hairTopY}, bottom:{x:avgX,y:yBottom} };
+}
+function estimateWaist(shoulderL, shoulderR, hipL, hipR){
+  // waist has no direct pose landmark: estimate the body-edge position at waist height
+  // by following each side's own shoulder→hip taper line (not pulled toward centerline),
+  // so the point lands on the torso silhouette edge rather than inside the body.
+  const t = 0.5; // narrowest point is typically midway between shoulders and hips
+  return { L: lerp(shoulderL, hipL, t), R: lerp(shoulderR, hipR, t) };
+}
+function riskInfo(risk){
+  if(risk==='risk') return {label:'ควรพบแพทย์ผู้เชี่ยวชาญ', cls:'risk', color:'#C0261E', bg:'#FCE9E7'};
+  if(risk==='warn') return {label:'เฝ้าระวัง / นัดติดตามซ้ำ', cls:'warn', color:'#B45309', bg:'#FDF2DD'};
+  return {label:'ผลปกติ', cls:'good', color:'#15803D', bg:'#E7F6EC'};
+}
+function computeMetrics(pts){
+  const shoulderAsym = Math.abs(pts.shoulderL.y-pts.shoulderR.y)/widthOf(pts.shoulderL,pts.shoulderR)*100;
+  const hasWaist = !!(pts.waistL&&pts.waistR);
+  const hasHip = !!(pts.hipL&&pts.hipR);
+  const waistAsym = hasWaist ? Math.abs(pts.waistL.y-pts.waistR.y)/widthOf(pts.waistL,pts.waistR)*100 : null;
+  const hipAsym = hasHip ? Math.abs(pts.hipL.y-pts.hipR.y)/widthOf(pts.hipL,pts.hipR)*100 : null;
+  const shoulderTilt = tiltDeg(pts.shoulderL,pts.shoulderR);
+  const waistTilt = hasWaist ? tiltDeg(pts.waistL,pts.waistR) : null;
+  const hipTilt = hasHip ? tiltDeg(pts.hipL,pts.hipR) : null;
+  const sMid={x:(pts.shoulderL.x+pts.shoulderR.x)/2,y:(pts.shoulderL.y+pts.shoulderR.y)/2};
+  const lowerMid = hasHip ? {x:(pts.hipL.x+pts.hipR.x)/2,y:(pts.hipL.y+pts.hipR.y)/2}
+                  : hasWaist ? {x:(pts.waistL.x+pts.waistR.x)/2,y:(pts.waistL.y+pts.waistR.y)/2}
+                  : null;
+  // head-to-hip lean vs true vertical: the classic "plumb line" idea, using the head
+  // midline in place of C7 and the hip midpoint in place of the sacrum
+  const hasHead = !!pts.headTop;
+  let headTiltAngle = null;
+  if(hasHead && lowerMid){
+    const dx = Math.abs(pts.headTop.x - lowerMid.x), dy = Math.abs(lowerMid.y - pts.headTop.y) || 1;
+    headTiltAngle = Math.atan2(dx, dy)*180/Math.PI;
+  }
+  // keep a label alongside each tilt/asymmetry candidate so we can report which
+  // specific measurement actually drove the final classification
+  const tiltCandidates = [
+    {label:'ไหล่เอียง', value:shoulderTilt},
+    {label:'เอวเอียง', value:waistTilt},
+    {label:'สะโพกเอียง', value:hipTilt},
+    {label:'ศีรษะเอียงจากแนวดิ่ง', value:headTiltAngle},
+  ].filter(c=>c.value!==null);
+  const maxTiltC = tiltCandidates.reduce((a,b)=> b.value>a.value?b:a, tiltCandidates[0]);
+  const trunkAngle = maxTiltC.value;
+  const coronalShift = lowerMid ? Math.abs(sMid.x-lowerMid.x)/widthOf(pts.shoulderL,pts.shoulderR)*100 : null;
+  const asymCandidates = [
+    {label:'ไหล่ไม่สมมาตร', value:shoulderAsym},
+    {label:'เอวไม่สมมาตร', value:waistAsym},
+    {label:'สะโพกไม่สมมาตร', value:hipAsym},
+  ].filter(c=>c.value!==null);
+  const maxAsymC = asymCandidates.reduce((a,b)=> b.value>a.value?b:a, asymCandidates[0]);
+  const maxAsym = maxAsymC.value;
+  const { angleAmber, angleRed, asymAmber, asymRed, shiftAmber, shiftRed } = S.settings;
+  let risk='good';
+  const riskHit = trunkAngle>=angleRed || maxAsym>=asymRed || (coronalShift!==null && coronalShift>=shiftRed);
+  const warnHit = trunkAngle>=angleAmber || maxAsym>=asymAmber || (coronalShift!==null && coronalShift>=shiftAmber);
+  if(riskHit) risk='risk'; else if(warnHit) risk='warn';
+  // build human-readable reasons for whichever metric(s) crossed the threshold
+  // that actually decided the current risk level, so the UI can show *why*
+  // a result came out the way it did instead of just the headline angle
+  const reasons=[];
+  if(risk==='risk'){
+    if(trunkAngle>=angleRed) reasons.push(`${maxTiltC.label} ${trunkAngle.toFixed(1)}° (เกณฑ์ ≥ ${angleRed}°)`);
+    if(maxAsym>=asymRed) reasons.push(`${maxAsymC.label} ${maxAsym.toFixed(1)}% (เกณฑ์ ≥ ${asymRed}%)`);
+    if(coronalShift!==null && coronalShift>=shiftRed) reasons.push(`แนวลำตัวเบี่ยง ${coronalShift.toFixed(1)}% (เกณฑ์ ≥ ${shiftRed}%)`);
+  } else if(risk==='warn'){
+    if(trunkAngle>=angleAmber) reasons.push(`${maxTiltC.label} ${trunkAngle.toFixed(1)}° (เกณฑ์ ≥ ${angleAmber}°)`);
+    if(maxAsym>=asymAmber) reasons.push(`${maxAsymC.label} ${maxAsym.toFixed(1)}% (เกณฑ์ ≥ ${asymAmber}%)`);
+    if(coronalShift!==null && coronalShift>=shiftAmber) reasons.push(`แนวลำตัวเบี่ยง ${coronalShift.toFixed(1)}% (เกณฑ์ ≥ ${shiftAmber}%)`);
+  }
+  return { shoulderAsym, hipAsym, waistAsym, trunkAngle, coronalShift, headTiltAngle, risk, reasons };
+}
+
+/* icons */
+const I_SPINE = `<svg viewBox="0 0 24 24" fill="none"><path d="M12 2c-3 3 3 4 0 7s3 4 0 7c-1 1-1 3 0 4" stroke="#fff" stroke-width="2.1" stroke-linecap="round"/></svg>`;
+const I_CAMERA = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
+const I_HISTORY = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13a9 9 0 1 0 2.13-7.36L3 8"/><path d="M12 7v5l4 2"/></svg>`;
+const I_CLOSE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>`;
+const I_INFO = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>`;
+const I_WARN = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>`;
+const I_TRASH = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14z"/></svg>`;
+const I_LOCK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M7 10V7a5 5 0 0 1 10 0v3"/></svg>`;
+const I_UNLOCK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M7 10V7a5 5 0 0 1 9.9-1"/></svg>`;
+const I_FLIP = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg>`;
+const CAMERA_GUIDE = `<svg viewBox="0 0 200 400" fill="none">
+  <ellipse cx="100" cy="52" rx="30" ry="34" stroke="#fff" stroke-width="2.5" stroke-dasharray="6 7"/>
+  <path d="M45 96 Q100 74 155 96 L166 262 Q100 302 34 262 Z" stroke="#fff" stroke-width="2.5" stroke-dasharray="6 7"/>
+  <line x1="10" y1="96" x2="45" y2="96" stroke="#fff" stroke-width="1.5" stroke-dasharray="3 5" opacity=".7"/>
+  <line x1="155" y1="96" x2="190" y2="96" stroke="#fff" stroke-width="1.5" stroke-dasharray="3 5" opacity=".7"/>
+</svg>`;
+function spineSVG(curveAmt, color){
+  const off = 5 + curveAmt*17;
+  return `<svg viewBox="0 0 60 90" fill="none">
+    <path d="M30 4 C ${30+off} 20, ${30-off} 34, ${30+off*0.7} 50 C ${30-off*0.5} 64, ${30+off*0.4} 78, 30 86" stroke="${color}" stroke-width="5" stroke-linecap="round"/>
+    ${Array.from({length:9}).map((_,i)=>{ const t=i/8; const y=4+t*82; const x=30+Math.sin(t*Math.PI*2.1)*off*0.8;
+      return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.4" fill="${color}" opacity="0.5"/>`; }).join('')}
+  </svg>`;
+}
+const ICON_BODY = `<svg viewBox="0 0 120 170" fill="none">
+  <ellipse cx="60" cy="26" rx="18" ry="20" fill="#E9F1FD"/>
+  <path d="M30 55 Q60 40 90 55 L96 130 Q60 148 24 130 Z" fill="#E9F1FD"/>
+  <path d="M60 46 C48 60 68 72 56 86 C46 98 66 110 58 124" stroke="#1264C7" stroke-width="3.4" stroke-linecap="round" fill="none"/>
+  <circle cx="30" cy="58" r="4.5" fill="#1264C7"/><circle cx="90" cy="58" r="4.5" fill="#1264C7"/>
+  <line x1="6" y1="58" x2="114" y2="58" stroke="#B9C7DC" stroke-width="1.5" stroke-dasharray="4 5"/>
+  <circle cx="34" cy="122" r="4.5" fill="#1264C7"/><circle cx="86" cy="122" r="4.5" fill="#1264C7"/>
+</svg>`;
+
+/* ---------- render ---------- */
+function render(){
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="topbar">
+      <div class="brand"><div class="brand-mark">${I_SPINE}</div><div class="brand-name">SpineWatch</div></div>
+      <div class="header-actions">
+        <button class="icon-btn" id="open-admin" title="สำหรับบุคลากรทางการแพทย์">${S.isAdmin?I_UNLOCK:I_LOCK}</button>
+        <button class="icon-btn" id="open-history" title="ประวัติการคัดกรอง">${I_HISTORY}</button>
+      </div>
+    </div>
+    <div id="view"></div>
+    <footer class="legal">SpineWatch เป็นเครื่องมือคัดกรองเบื้องต้นเท่านั้น ไม่ใช่การวินิจฉัยทางการแพทย์ กรุณายืนยันผลกับแพทย์ผู้เชี่ยวชาญเสมอ</footer>
+    <div id="overlays"></div>
+  `;
+  document.getElementById('open-history').onclick = ()=>{ S.historyOpen=true; renderOverlays(); };
+  document.getElementById('open-admin').onclick = ()=>{
+    if(S.isAdmin){ S.adminOpen=true; } else { S.authError=''; S.authOpen=true; }
+    renderOverlays();
+  };
+  renderView();
+  renderOverlays();
+}
+
+function renderView(){
+  const el = document.getElementById('view');
+  if(S.view==='home') return renderHome(el);
+  if(S.view==='review') return renderReview(el);
+}
+
+/* ---------- HOME ---------- */
+function renderHome(el){
+  const isMobile = window.matchMedia('(pointer:coarse)').matches;
+  const hasCamera = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  el.innerHTML = `
+    <div class="hero">
+      <div class="hero-badge">คัดกรองด้วยปัญญาประดิษฐ์ (AI)</div>
+      <h1>ระบบคัดกรอง<br>ภาวะกระดูกสันหลังคดเบื้องต้น</h1>
+      <p>ถ่ายภาพด้านหลัง ระบบตรวจจับตำแหน่งไหล่-สะโพกให้อัตโนมัติ แล้วประเมินความเสี่ยงเบื้องต้นให้ทันที</p>
+    </div>
+    <div class="illus-card">${ICON_BODY}</div>
+    <div class="steps-row">
+      <div class="step-pill"><div class="n">1</div><div class="t">ถ่ายภาพด้านหลัง</div></div>
+      <div class="step-pill"><div class="n">2</div><div class="t">AI จับไหล่/เอว/สะโพก</div></div>
+      <div class="step-pill"><div class="n">3</div><div class="t">ดูผลทันที</div></div>
+    </div>
+    <div class="consent-row">
+      <input type="checkbox" id="consent-check" ${S.consent?'checked':''}>
+      <span>ฉันได้รับความยินยอมในการถ่ายภาพและใช้ผลนี้เพื่อ<strong>คัดกรองเบื้องต้นเท่านั้น</strong> ไม่ใช่การวินิจฉัยทางการแพทย์ แนะนำให้เลี่ยงถ่ายติดใบหน้าเพื่อความเป็นส่วนตัว</span>
+    </div>
+    <div class="cta-wrap">
+      <input type="file" accept="image/*" id="file-input" style="display:none">
+      <button class="btn-cta" id="cta-scan" ${S.consent?'':'disabled'}>${I_CAMERA}${hasCamera?'ถ่ายภาพเพื่อคัดกรอง':(isMobile?'ถ่ายภาพเพื่อคัดกรอง':'อัปโหลดภาพเพื่อคัดกรอง')}</button>
+      ${hasCamera? `<button class="cta-link" id="cta-upload" ${S.consent?'':'disabled'}>หรืออัปโหลดภาพจากอุปกรณ์</button>` : ''}
+      <div class="cta-sub">ประมวลผลในเครื่องของคุณเอง ไม่มีการส่งภาพออกนอกเบราว์เซอร์</div>
+    </div>
+  `;
+  document.getElementById('consent-check').onchange = (e)=>{ S.consent=e.target.checked; renderView(); };
+  document.getElementById('cta-scan').onclick = ()=>{ if(hasCamera) openCameraMode(); else document.getElementById('file-input').click(); };
+  const uploadBtn = document.getElementById('cta-upload');
+  if(uploadBtn) uploadBtn.onclick = ()=>document.getElementById('file-input').click();
+  document.getElementById('file-input').onchange = async (e)=>{
+    const f = e.target.files[0];
+    e.target.value = ''; // allow re-selecting the same file later
+    if(!f) return;
+    await processImageFile(f);
+  };
+}
+
+async function processImageFile(f){
+  if(S.scanning) return; // ignore re-entrant selection while already processing
+  if(!f.type.startsWith('image/')){ alert('กรุณาเลือกไฟล์รูปภาพเท่านั้น'); return; }
+  if(f.size > 25*1024*1024){ alert('ไฟล์ภาพมีขนาดใหญ่เกินไป กรุณาเลือกไฟล์ที่เล็กกว่า 25MB'); return; }
+  S.scanning = true; renderOverlays();
+  try{
+    const {dataUrl,w,h} = await resizeImageFile(f, 560);
+    S.current = { id:uid(), date:Date.now(), img:{src:dataUrl,w,h}, points:{}, aiOk:null, skip:{waist:false,hip:false}, backProfile:[] };
+    await runAutoDetect();
+    S.scanning = false; S.view='review'; render();
+  }catch(err){
+    console.error(err);
+    S.scanning = false; S.current = null; renderOverlays();
+    alert('ไม่สามารถอ่านไฟล์ภาพนี้ได้ กรุณาลองเลือกภาพอื่น');
+  }
+}
+
+/* ---------- in-app camera mode ---------- */
+async function openCameraMode(){
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:S.facingMode }, audio:false });
+    S.cameraStream = stream; S.cameraOpen = true; renderOverlays();
+    const video = document.getElementById('camera-video');
+    video.srcObject = stream;
+    await video.play();
+  }catch(err){
+    console.warn('camera unavailable, falling back to file picker', err);
+    stopCameraStream();
+    const input = document.getElementById('file-input');
+    if(input) input.click();
+  }
+}
+function stopCameraStream(){
+  if(S.cameraStream){ S.cameraStream.getTracks().forEach(t=>t.stop()); S.cameraStream=null; }
+  S.cameraOpen = false;
+}
+async function flipCamera(){
+  S.facingMode = S.facingMode==='environment' ? 'user' : 'environment';
+  stopCameraStream();
+  await openCameraMode();
+}
+async function captureFromCamera(){
+  const video = document.getElementById('camera-video');
+  if(!video || !video.videoWidth) return;
+  const maxW = 560;
+  const scale = Math.min(1, maxW/video.videoWidth);
+  const w = Math.round(video.videoWidth*scale), h = Math.round(video.videoHeight*scale);
+  const c = document.createElement('canvas'); c.width=w; c.height=h;
+  c.getContext('2d').drawImage(video,0,0,w,h);
+  const dataUrl = c.toDataURL('image/jpeg',0.78);
+  stopCameraStream();
+  S.current = { id:uid(), date:Date.now(), img:{src:dataUrl,w,h}, points:{}, aiOk:null, skip:{waist:false,hip:false}, backProfile:[] };
+  S.scanning = true; renderOverlays();
+  try{
+    await runAutoDetect();
+    S.scanning=false; S.view='review'; render();
+  }catch(err){
+    console.error(err); S.scanning=false; renderOverlays();
+  }
+}
+
+/* ---------- snap landmark points to the outermost body edge ---------- */
+// MediaPipe's shoulder/hip landmarks sit at the joint (somewhat inside the body),
+// not at the visible outer contour. These helpers scan pixels outward from each
+// landmark, along its row, until the background is reached, and use the last
+// body-colored pixel as the true outer edge — e.g. the outermost point of the
+// shoulder or waist, not just the joint position.
+function imageDataFromEl(imgEl, w, h){
+  const c = document.createElement('canvas'); c.width=w; c.height=h;
+  const ctx = c.getContext('2d'); ctx.drawImage(imgEl,0,0,w,h);
+  return ctx.getImageData(0,0,w,h);
+}
+function sampleBackgroundColor(imageData){
+  const { data, width, height } = imageData;
+  const corners = [[2,2],[width-3,2],[2,height-3],[width-3,height-3]];
+  let r=0,g=0,b=0;
+  corners.forEach(([x,y])=>{ const i=(y*width+x)*4; r+=data[i]; g+=data[i+1]; b+=data[i+2]; });
+  return { r:r/4, g:g/4, b:b/4 };
+}
+function colorDistAt(data, idx, bg){
+  const dr=data[idx]-bg.r, dg=data[idx+1]-bg.g, db=data[idx+2]-bg.b;
+  return Math.sqrt(dr*dr+dg*dg+db*db);
+}
+// backgrounds are often a gradient/vignette (as in studio photos), so a single global
+// color sample doesn't match every row. Sample background locally, right at the image
+// border on the side we're scanning toward, using the same row — this adapts to
+// vertical gradients instead of assuming one flat background color for the whole photo.
+function localBackgroundAt(imageData, y, dir, sampleWidth=8){
+  const { data, width, height } = imageData;
+  const yy = Math.max(0, Math.min(height-1, Math.round(y)));
+  let r=0,g=0,b=0,n=0;
+  for(let i=0;i<sampleWidth;i++){
+    const x = dir<0 ? i : (width-1-i);
+    if(x<0||x>=width) continue;
+    const idx=(yy*width+x)*4; r+=data[idx]; g+=data[idx+1]; b+=data[idx+2]; n++;
+  }
+  return n? {r:r/n,g:g/n,b:b/n} : null;
+}
+// scan from (startX, y) in direction dir (-1 left / +1 right) and return the x of
+// the last body-colored pixel before a run of background pixels is reached.
+// maxOffset caps how far the point can move from its starting position, scaled to
+// the person's own size in the photo, so this can never drift all the way to the
+// edge of the *image* — only to the edge of the *body*.
+function findOuterEdgeX(imageData, y, startX, dir, globalBg, maxOffset, threshold=32, confirmRun=5){
+  const { data, width, height } = imageData;
+  const yy = Math.max(0, Math.min(height-1, Math.round(y)));
+  const bg = localBackgroundAt(imageData, yy, dir) || globalBg;
+  let x = Math.max(0, Math.min(width-1, Math.round(startX)));
+  const limit = dir<0 ? Math.max(0, x-maxOffset) : Math.min(width-1, x+maxOffset);
+  let lastBody = x, bgRun = 0;
+  while(dir<0 ? x>=limit : x<=limit){
+    const idx = (yy*width+x)*4;
+    if(colorDistAt(data, idx, bg) < threshold){
+      bgRun++; if(bgRun>=confirmRun) break;
+    }else{ bgRun=0; lastBody=x; }
+    x += dir;
+  }
+  return lastBody;
+}
+// For hips, snapping outward to the widest point at a *fixed* height can land on
+// different parts of the hip curve on each side when the pelvis is tilted. The
+// clinically relevant point is the HIGHEST point of each iliac crest, so we search a
+// small column window around the landmark and, for every column, find where the body
+// silhouette begins (scanning downward from above); the column with the smallest
+// such y is the true peak — an apples-to-apples point on both sides.
+function columnLocalBackground(imageData, x, yTop, sampleHeight=6){
+  const { data, width, height } = imageData;
+  x = Math.max(0, Math.min(width-1, Math.round(x)));
+  let r=0,g=0,b=0,n=0;
+  for(let i=0;i<sampleHeight;i++){
+    const y = Math.round(yTop)+i; if(y<0||y>=height) continue;
+    const idx=(y*width+x)*4; r+=data[idx]; g+=data[idx+1]; b+=data[idx+2]; n++;
+  }
+  return n? {r:r/n,g:g/n,b:b/n} : null;
+}
+function scanColumnTopY(imageData, x, yTop, yBottom, bg, threshold=32){
+  const { data, width, height } = imageData;
+  x = Math.max(0, Math.min(width-1, Math.round(x)));
+  const y0 = Math.max(0, Math.round(yTop)), y1 = Math.min(height-1, Math.round(yBottom));
+  for(let y=y0; y<=y1; y++){
+    const idx=(y*width+x)*4;
+    if(colorDistAt(data, idx, bg) >= threshold) return y;
+  }
+  return null;
+}
+// finds the "corner" point of a shoulder or hip: where the line from the neck/waist
+// slopes up and outward, then breaks and drops down into the arm/leg — i.e. the local
+// height peak along the body's outline. Two things made earlier attempts miss it:
+//  1) searching too far above the joint let it catch hair near the neckline instead
+//     of the true corner, which sits close to the joint's own height
+//  2) a symmetric window let it drift medially into the neck/collar area
+// so the vertical range is now tight, and the horizontal window is biased outward
+// (away from center) using `dir`: -1 for the left side, +1 for the right side.
+function findPeakPoint(imageData, landmark, globalBg, scale, dir){
+  const xRadius = Math.max(8, scale*0.18);
+  const xA = landmark.x + dir*(-0.15*xRadius);
+  const xB = landmark.x + dir*(1.15*xRadius);
+  const xLo = Math.min(xA,xB), xHi = Math.max(xA,xB);
+  const yTop = landmark.y - scale*0.18, yBottom = landmark.y + scale*0.30;
+  const step = Math.max(1, Math.round((xHi-xLo)/12));
+  let best = null;
+  for(let x=xLo; x<=xHi; x+=step){
+    const localBg = columnLocalBackground(imageData, x, yTop) || globalBg;
+    const topY = scanColumnTopY(imageData, x, yTop, yBottom, localBg);
+    if(topY!==null && (!best || topY<best.y)) best = { x, y:topY };
+  }
+  return best || landmark;
+}
+function snapPairToPeak(imageData, bg, L, R){
+  const scale = widthOf(L,R);
+  return {
+    L: findPeakPoint(imageData, L, bg, scale, -1),
+    R: findPeakPoint(imageData, R, bg, scale, +1),
+  };
+}
+
+// the waist is a narrowing, not an outermost point — unlike shoulders/hips, snapping it
+// outward to the body edge is wrong. Instead, scan several candidate heights between the
+// shoulders and hips, measure the body's width at each, and use the row where the torso
+// is narrowest (the actual "waist indent") rather than a fixed proportion of the way down.
+function findWaistByNarrowing(imageData, bg, shoulderL, shoulderR, hipL, hipR){
+  const shoulderMid = { x:(shoulderL.x+shoulderR.x)/2, y:(shoulderL.y+shoulderR.y)/2 };
+  const hipMid = { x:(hipL.x+hipR.x)/2, y:(hipL.y+hipR.y)/2 };
+  const shoulderW = widthOf(shoulderL,shoulderR), hipW = widthOf(hipL,hipR);
+  const steps = 40; // finer sampling for a smoother, more repeatable minimum
+  const candidates = [];
+  for(let i=0;i<=steps;i++){
+    const t = 0.28 + (0.80-0.28)*(i/steps); // stay away from the armpits and hip crease
+    const center = lerp(shoulderMid, hipMid, t);
+    const widthGuess = shoulderW*(1-t) + hipW*t;
+    const maxOffset = Math.max(12, widthGuess*0.65);
+    const leftX = findOuterEdgeX(imageData, center.y, center.x, -1, bg, maxOffset);
+    const rightX = findOuterEdgeX(imageData, center.y, center.x, +1, bg, maxOffset);
+    const w = rightX - leftX;
+    // reject degenerate reads (e.g. scan collapsed due to an arm/occlusion) that are
+    // implausibly narrow compared to the torso scale at this height
+    if(w > widthGuess*0.35) candidates.push({ t, w, y:center.y, leftX, rightX });
+  }
+  if(!candidates.length) return null;
+  candidates.sort((a,b)=>a.w-b.w);
+  // average the small cluster of narrowest rows (not just the single minimum) so one
+  // noisy row can't swing the result — this is what makes the pick stable/repeatable
+  const clusterSize = Math.max(1, Math.min(5, Math.round(candidates.length*0.12)));
+  const cluster = candidates.slice(0, clusterSize);
+  const avg = cluster.reduce((acc,c)=>({ y:acc.y+c.y, leftX:acc.leftX+c.leftX, rightX:acc.rightX+c.rightX }), {y:0,leftX:0,rightX:0});
+  const n = cluster.length;
+  return { L:{x:avg.leftX/n, y:avg.y/n}, R:{x:avg.rightX/n, y:avg.y/n} };
+}
+
+// dense symmetry scan down the back: instead of only comparing shoulders/waist/hips at
+// 3 discrete heights, sample many closely-spaced rows along the spine reference path and,
+// at each one, measure how far the body's left edge and right edge sit from the spine
+// centerline. Equal left/right distance = symmetric at that height; unequal = a bulge or
+// hollow on one side (e.g. a rib hump), which single-zone measurements can miss entirely.
+function computeBackSymmetryProfile(imageData, bg, pathPoints){
+  if(pathPoints.length<2) return [];
+  const scale = widthOf(pathPoints[0], pathPoints[pathPoints.length-1]) || 100;
+  const rows = 34;
+  const profile = [];
+  for(let i=0;i<=rows;i++){
+    const t = i/rows;
+    const seg = t*(pathPoints.length-1);
+    const idx = Math.min(Math.floor(seg), pathPoints.length-2);
+    const lt = seg-idx;
+    const a = pathPoints[idx], b = pathPoints[idx+1];
+    const center = { x:a.x+(b.x-a.x)*lt, y:a.y+(b.y-a.y)*lt };
+    const maxOffset = Math.max(14, scale*0.7);
+    const leftX = findOuterEdgeX(imageData, center.y, center.x, -1, bg, maxOffset);
+    const rightX = findOuterEdgeX(imageData, center.y, center.x, +1, bg, maxOffset);
+    const leftDist = center.x-leftX, rightDist = rightX-center.x;
+    if(leftDist>3 && rightDist>3){
+      const avgDist = (leftDist+rightDist)/2;
+      const asym = Math.abs(leftDist-rightDist)/avgDist*100;
+      profile.push({ y:center.y, leftX, rightX, centerX:center.x, asym });
+    }
+  }
+  return profile;
+}
+function hexToRgb(hex){ const n=parseInt(hex.slice(1),16); return {r:(n>>16)&255,g:(n>>8)&255,b:n&255}; }
+function mixColor(hexA,hexB,t){
+  const a=hexToRgb(hexA), b=hexToRgb(hexB);
+  return `rgb(${Math.round(a.r+(b.r-a.r)*t)},${Math.round(a.g+(b.g-a.g)*t)},${Math.round(a.b+(b.b-a.b)*t)})`;
+}
+
+/* ---------- auto detect ---------- */
+async function runAutoDetect(){
+  const nc = S.current;
+  try{
+    const landmarker = await withTimeout(getPoseLandmarker(), 15000);
+    const imgEl = new Image();
+    await withTimeout(new Promise((res,rej)=>{ imgEl.onload=res; imgEl.onerror=rej; imgEl.src=nc.img.src; }), 8000);
+    const result = landmarker.detect(imgEl);
+    if(!result.landmarks || !result.landmarks.length) throw new Error('no pose');
+    const lm = result.landmarks[0];
+    const toPx = i => ({ x: lm[i].x*nc.img.w, y: lm[i].y*nc.img.h });
+    let shoulderL=toPx(11), shoulderR=toPx(12), hipL=toPx(23), hipR=toPx(24);
+    // shoulders: snap to the shoulder "corner" (top of the trapezius slope, where it
+    // breaks down into the arm) — the anatomically correct reference point.
+    // hips: snap to the topmost point of the iliac crest, same idea.
+    try{
+      const imageData = imageDataFromEl(imgEl, nc.img.w, nc.img.h);
+      const bg = sampleBackgroundColor(imageData);
+      ({ L:shoulderL, R:shoulderR } = snapPairToPeak(imageData, bg, shoulderL, shoulderR));
+      ({ L:hipL, R:hipR } = snapPairToPeak(imageData, bg, hipL, hipR));
+      var waist = findWaistByNarrowing(imageData, bg, shoulderL, shoulderR, hipL, hipR)
+                  || estimateWaist(shoulderL, shoulderR, hipL, hipR);
+      var head = findHeadMidline(imageData, bg, { x:(shoulderL.x+shoulderR.x)/2, y:(shoulderL.y+shoulderR.y)/2 }, widthOf(shoulderL,shoulderR));
+      var sMidTmp = { x:(shoulderL.x+shoulderR.x)/2, y:(shoulderL.y+shoulderR.y)/2 };
+      var wMidTmp = (!nc.skip.waist) ? { x:(waist.L.x+waist.R.x)/2, y:(waist.L.y+waist.R.y)/2 } : null;
+      var hMidTmp = (!nc.skip.hip) ? { x:(hipL.x+hipR.x)/2, y:(hipL.y+hipR.y)/2 } : null;
+      var backPathPts = [sMidTmp, wMidTmp, hMidTmp].filter(Boolean);
+      var backProfile = backPathPts.length>=2 ? computeBackSymmetryProfile(imageData, bg, backPathPts) : [];
+    }catch(edgeErr){
+      console.warn('edge snapping failed, using raw landmarks', edgeErr);
+      var waist = estimateWaist(shoulderL, shoulderR, hipL, hipR);
+      var head = null;
+      var backProfile = [];
+    }
+    nc.points = { shoulderL, shoulderR };
+    if(!nc.skip.waist){ nc.points.waistL = waist.L; nc.points.waistR = waist.R; }
+    if(!nc.skip.hip){ nc.points.hipL = hipL; nc.points.hipR = hipR; }
+    if(head){ nc.points.headTop = head.top; }
+    nc.backProfile = backProfile;
+    nc.aiOk = true;
+  }catch(err){ console.error(err); nc.aiOk = false; nc.points = {}; nc.backProfile = []; }
+}
+
+function activeGroups(nc){ return ['shoulder', ...(nc.skip.waist?[]:['waist']), ...(nc.skip.hip?[]:['hip'])]; }
+function isCaseComplete(nc){ return activeGroups(nc).every(g=> nc.points[g+'L'] && nc.points[g+'R']); }
+
+/* ---------- REVIEW (adjust points) ---------- */
+function renderReview(el){
+  const nc = S.current;
+  const complete = isCaseComplete(nc);
+  el.innerHTML = `
+    <div class="review-wrap">
+      <div class="canvas-card">
+        <div class="canvas-wrap"><canvas id="mark-canvas"></canvas></div>
+        <div class="legend-row">
+          <span><i style="background:#3AB0FF"></i>กึ่งกลางศีรษะ</span>
+          <span><i style="background:#1264C7"></i>ไหล่ (โซน 1)</span>
+          <span><i style="background:#B23FA0"></i>เอว (โซน 2)</span>
+          <span><i style="background:#C97A2B"></i>สะโพก (โซน 3)</span>
+          <span><i style="background:#F5B93E"></i>แนวสันหลังกลาง (อ้างอิง)</span>
+          <span><i style="background:linear-gradient(90deg,#3FA66B,#E5574C)"></i>เส้นวัดสมมาตรตลอดแนวหลัง (เขียว=สมมาตร แดง=ไม่สมมาตร)</span>
+        </div>
+      </div>
+      <div id="review-hint"></div>
+      <div class="skip-row">
+        <label><input type="checkbox" id="skip-waist" ${nc.skip.waist?'checked':''}> เอวไม่อยู่ในเฟรม / ไม่ต้องการวัด</label>
+        <label><input type="checkbox" id="skip-hip" ${nc.skip.hip?'checked':''}> สะโพกไม่อยู่ในเฟรม</label>
+      </div>
+      <div class="review-actions">
+        <button class="btn secondary" id="retake-btn">ถ่ายใหม่</button>
+        <button class="btn secondary" id="redetect-btn">ตรวจจับใหม่</button>
+      </div>
+    </div>
+    <div class="bottom-bar">
+      <button class="btn-cta" id="see-result" ${complete?'':'disabled'}>ดูผลลัพธ์</button>
+    </div>
+  `;
+  document.getElementById('retake-btn').onclick = ()=>{ S.current=null; S.view='home'; render(); };
+  document.getElementById('redetect-btn').onclick = async ()=>{ S.scanning=true; renderOverlays(); await runAutoDetect(); S.scanning=false; renderOverlays(); renderReview(el); };
+  document.getElementById('see-result').onclick = ()=>{ if(complete){ S.resultOpen=true; renderOverlays(); } };
+  document.getElementById('skip-waist').onchange = (e)=>{
+    nc.skip.waist = e.target.checked;
+    if(nc.skip.waist){ delete nc.points.waistL; delete nc.points.waistR; }
+    renderReview(el);
+  };
+  document.getElementById('skip-hip').onchange = (e)=>{
+    nc.skip.hip = e.target.checked;
+    if(nc.skip.hip){ delete nc.points.hipL; delete nc.points.hipR; }
+    renderReview(el);
+  };
+  setupCanvas(nc, ()=>{ document.getElementById('see-result').disabled = !isCaseComplete(nc); });
+  drawHint(nc);
+}
+function drawHint(nc){
+  const el = document.getElementById('review-hint'); if(!el) return;
+  const groups = activeGroups(nc);
+  const groupNameTh = { shoulder:'ไหล่', waist:'เอว', hip:'สะโพก' };
+  const missing = groups.find(g=>!(nc.points[g+'L']&&nc.points[g+'R']));
+  if(nc.aiOk && !missing){
+    el.innerHTML = `<div class="review-hint">${I_INFO}AI ตรวจจับตำแหน่งไหล่และสะโพก แล้วขยับจุดไปยัง<strong>มุมไหล่/สะโพก</strong>ให้อัตโนมัติ (จุดสูงสุดก่อนหักลงเป็นแขน/ขา) จุดเอวหาจากตำแหน่งที่ลำตัวคอดแคบที่สุด และมีจุดสีฟ้าแสดงเส้นแบ่งครึ่งศีรษะไว้เทียบความเอียงของลำตัวทั้งหมด — กรุณาตรวจสอบและลากปรับจุดให้ตรงตำแหน่งจริงก่อนดูผลลัพธ์เสมอ</div>`;
+  }else if(missing){
+    el.innerHTML = `<div class="review-hint">${I_INFO}แตะบนภาพเพื่อทำเครื่องหมายตำแหน่ง${groupNameTh[missing]}ที่เหลือ (ซ้ายก่อน แล้วตามด้วยขวา)</div>`;
+  }else{
+    el.innerHTML = `<div class="review-hint fail">${I_WARN}ตรวจจับอัตโนมัติไม่สำเร็จ กรุณาแตะบนภาพเพื่อทำเครื่องหมายจุดที่เหลือด้วยตนเอง เรียงจากซ้ายไปขวาของแต่ละตำแหน่ง</div>`;
+  }
+}
+
+function setupCanvas(nc, onChange){
+  const canvas = document.getElementById('mark-canvas');
+  const image = new Image();
+  const order = activeGroups(nc).flatMap(g=>[g+'L', g+'R']);
+  image.onload = ()=>{ canvas.width=image.width; canvas.height=image.height; canvas._img=image; draw(); };
+  image.src = nc.img.src;
+  let dragSlot=null;
+  function ptFromEvent(e){
+    const rect=canvas.getBoundingClientRect(); const sx=canvas.width/rect.width, sy=canvas.height/rect.height;
+    const cx=(e.touches?e.touches[0].clientX:e.clientX)-rect.left, cy=(e.touches?e.touches[0].clientY:e.clientY)-rect.top;
+    return {x:cx*sx, y:cy*sy};
+  }
+  canvas.onpointerdown = (e)=>{
+    const p = ptFromEvent(e);
+    let hit=null;
+    Object.keys(nc.points).forEach(k=>{ const pt=nc.points[k]; if(Math.hypot(pt.x-p.x,pt.y-p.y)<18) hit=k; });
+    if(hit) dragSlot=hit;
+    else { const next = order.find(k=>!nc.points[k]); if(next){ nc.points[next]=p; dragSlot=next; } }
+    draw(); onChange(); drawHint(nc);
+  };
+  canvas.onpointermove = (e)=>{ if(!dragSlot) return; nc.points[dragSlot]=ptFromEvent(e); draw(); };
+  window.onpointerup = ()=>{ dragSlot=null; };
+  function draw(){
+    const ctx=canvas.getContext('2d'); if(!canvas._img) return;
+    ctx.clearRect(0,0,canvas.width,canvas.height); ctx.drawImage(canvas._img,0,0);
+    const p = nc.points;
+    if(p.shoulderL&&p.shoulderR){
+      const y=(p.shoulderL.y+p.shoulderR.y)/2;
+      ctx.save(); ctx.setLineDash([7,6]); ctx.strokeStyle='rgba(255,255,255,.8)'; ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(canvas.width,y); ctx.stroke(); ctx.restore();
+    }
+    if(p.shoulderL&&p.shoulderR){
+      const sMid={x:(p.shoulderL.x+p.shoulderR.x)/2,y:(p.shoulderL.y+p.shoulderR.y)/2};
+      const wMid = (p.waistL&&p.waistR) ? {x:(p.waistL.x+p.waistR.x)/2,y:(p.waistL.y+p.waistR.y)/2} : null;
+      const hMid = (p.hipL&&p.hipR) ? {x:(p.hipL.x+p.hipR.x)/2,y:(p.hipL.y+p.hipR.y)/2} : null;
+      const path = [p.headTop, sMid, wMid, hMid].filter(Boolean);
+      if(path.length>=2){
+        ctx.save(); ctx.strokeStyle='#F5B93E'; ctx.lineWidth=3; ctx.beginPath();
+        ctx.moveTo(path[0].x,path[0].y); for(let i=1;i<path.length;i++) ctx.lineTo(path[i].x,path[i].y); ctx.stroke();
+        const n=8;
+        for(let i=0;i<=n;i++){ const t=i/n; const seg = t*(path.length-1); const idx=Math.min(Math.floor(seg),path.length-2); const lt=seg-idx;
+          const a=path[idx], b=path[idx+1]; const x=a.x+(b.x-a.x)*lt, y=a.y+(b.y-a.y)*lt;
+          ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2); ctx.fillStyle='#2E9E5B'; ctx.fill(); }
+        ctx.restore();
+      }
+      // dense back-symmetry scan: many thin lines from left edge to right edge at each
+      // sampled height, colored green (symmetric) to red (asymmetric) — reveals bulges
+      // or hollows on one side that 3 discrete zones alone would miss
+      if(nc.backProfile && nc.backProfile.length){
+        ctx.save();
+        nc.backProfile.forEach(row=>{
+          const t = Math.min(1, row.asym/12);
+          ctx.strokeStyle = mixColor('#3FA66B','#E5574C', t);
+          ctx.globalAlpha = 0.8; ctx.lineWidth = 1.6;
+          ctx.beginPath(); ctx.moveTo(row.leftX,row.y); ctx.lineTo(row.rightX,row.y); ctx.stroke();
+        });
+        ctx.restore();
+      }
+      // head point itself: stays exactly where it was detected/dragged — only the
+      // connecting line above was changed to route through it directly
+      if(p.headTop){
+        ctx.beginPath(); ctx.arc(p.headTop.x,p.headTop.y,7,0,Math.PI*2); ctx.fillStyle='#3AB0FF'; ctx.fill();
+        ctx.lineWidth=2.5; ctx.strokeStyle='#fff'; ctx.stroke();
+      }
+    }
+    [['shoulderL','shoulderR','#1264C7'],['waistL','waistR','#B23FA0'],['hipL','hipR','#C97A2B']].forEach(([lk,rk,color])=>{
+      const L=p[lk], R=p[rk];
+      if(L&&R){ ctx.beginPath(); ctx.moveTo(L.x,L.y); ctx.lineTo(R.x,R.y); ctx.strokeStyle=color+'CC'; ctx.lineWidth=3; ctx.stroke(); }
+      [L,R].forEach(pt=>{ if(!pt) return;
+        ctx.beginPath(); ctx.arc(pt.x,pt.y,8,0,Math.PI*2); ctx.fillStyle=color; ctx.fill();
+        ctx.lineWidth=2.5; ctx.strokeStyle='#fff'; ctx.stroke();
+      });
+    });
+    // zone tag badges, top-right, one per active group present on the image
+    let tagY = 12;
+    [['shoulder','ไหล่','#1264C7',1],['waist','เอว','#B23FA0',2],['hip','สะโพก','#C97A2B',3]].forEach(([g,label,color,n])=>{
+      if(p[g+'L']&&p[g+'R']){
+        const text = `โซน ${n}: ${label}`;
+        ctx.font='bold 12px Kanit, sans-serif';
+        const tw = ctx.measureText(text).width+18;
+        ctx.fillStyle = color; ctx.beginPath();
+        ctx.roundRect ? ctx.roundRect(canvas.width-tw-10, tagY, tw, 24, 7) : ctx.rect(canvas.width-tw-10, tagY, tw, 24);
+        ctx.fill();
+        ctx.fillStyle='#fff'; ctx.textAlign='left'; ctx.fillText(text, canvas.width-tw-1, tagY+16);
+        tagY += 30;
+      }
+    });
+    // "not in frame" notices for skipped groups, bottom-left
+    let noteY = canvas.height-14;
+    if(nc.skip.hip){ ctx.font='bold 13px Kanit, sans-serif'; ctx.fillStyle='#F04438'; ctx.textAlign='left'; ctx.fillText('สะโพก: ไม่อยู่ในเฟรม', 12, noteY); noteY-=20; }
+    if(nc.skip.waist){ ctx.font='bold 13px Kanit, sans-serif'; ctx.fillStyle='#F04438'; ctx.textAlign='left'; ctx.fillText('เอว: ไม่อยู่ในเฟรม', 12, noteY); }
+  }
+}
+
+/* ---------- overlays: scanning / result sheet / history sheet ---------- */
+function renderOverlays(){
+  const el = document.getElementById('overlays'); if(!el) return;
+  let html='';
+  if(S.cameraOpen){
+    html += `
+    <div class="camera-screen" id="camera-screen">
+      <video id="camera-video" class="camera-video" playsinline muted autoplay></video>
+      <div class="camera-guide">${CAMERA_GUIDE}</div>
+      <div class="camera-topbar">
+        <button class="icon-btn" id="camera-close" title="ปิดกล้อง">${I_CLOSE}</button>
+        <button class="icon-btn" id="camera-flip" title="สลับกล้อง">${I_FLIP}</button>
+      </div>
+      <div class="camera-hint">จัดให้แนวไหล่และสะโพกอยู่ในกรอบ ถ่ายจากด้านหลังในระยะที่เห็นทั้งช่วงบน</div>
+      <div class="camera-bottom"><button class="shutter-btn" id="camera-shutter" title="ถ่ายภาพ"></button></div>
+    </div>`;
+  }
+  if(S.scanning){
+    html += `<div class="loading-screen"><div class="loading-card"><div class="spinner-lg"></div><h3 style="font-size:15px;">กำลังวิเคราะห์ภาพ</h3><p>ตรวจจับตำแหน่งไหล่ เอว และสะโพกด้วย AI...</p></div></div>`;
+  }
+  if(S.resultOpen && S.current){
+    const m = computeMetrics(S.current.points);
+    const info = riskInfo(m.risk);
+    const curveAmt = Math.min(1, m.trunkAngle/12);
+    const bp = S.current.backProfile || [];
+    const backAsymAvg = bp.length? bp.reduce((s,r)=>s+r.asym,0)/bp.length : null;
+    const backAsymPeak = bp.length? Math.max(...bp.map(r=>r.asym)) : null;
+    const missingLabels = [];
+    if(S.current.skip.waist) missingLabels.push('เอว');
+    if(S.current.skip.hip) missingLabels.push('สะโพก');
+    const advice = {
+      good:'ไม่พบความไม่สมมาตรที่มีนัยสำคัญในขณะนี้ แนะนำคัดกรองซ้ำทุก 6-12 เดือนในช่วงวัยเจริญเติบโต',
+      warn:'พบความไม่สมมาตรเล็กน้อย แนะนำติดตามอาการและคัดกรองซ้ำใน 3-4 เดือน หากมีแนวโน้มเพิ่มขึ้นควรพบแพทย์',
+      risk:'พบค่าที่เข้าเกณฑ์ควรตรวจเพิ่มเติม แนะนำพบแพทย์กระดูกและข้อเพื่อตรวจยืนยันด้วยภาพถ่ายรังสี'
+    }[m.risk];
+    html += `
+    <div class="modal-bg" id="result-bg">
+      <div class="result-sheet">
+        <div class="sheet-handle"></div>
+        <div class="result-icon-wrap" style="background:${info.bg}">${spineSVG(curveAmt, info.color)}</div>
+        <div class="result-title">${info.label}</div>
+        <div class="result-badge" style="color:${info.color}">มุมเอียงโดยประมาณ ${m.trunkAngle.toFixed(1)}°</div>
+        ${missingLabels.length? `<p style="text-align:center;font-size:11.5px;color:var(--warn);margin-top:8px;">ผลนี้ไม่รวมข้อมูล: ${missingLabels.join(', ')} (ไม่อยู่ในเฟรม/ไม่ได้วัด) ความแม่นยำจึงลดลง</p>`:''}
+        <div class="result-advice">${advice}</div>
+        <div class="pro-toggle-row">
+          <span>แสดงตัวเลขละเอียด (โหมดบุคลากรการแพทย์)</span>
+          <div class="switch ${S.proMode?'on':''}" id="pro-switch"><i></i></div>
+        </div>
+        ${S.proMode? `
+        <div class="pro-metrics">
+          <div class="pro-metric"><div class="val">${m.shoulderAsym.toFixed(1)}%</div><div class="lbl">ไหล่ไม่สมมาตร</div></div>
+          <div class="pro-metric"><div class="val">${m.waistAsym===null?'—':m.waistAsym.toFixed(1)+'%'}</div><div class="lbl">เอวไม่สมมาตร</div></div>
+          <div class="pro-metric"><div class="val">${m.hipAsym===null?'—':m.hipAsym.toFixed(1)+'%'}</div><div class="lbl">สะโพกไม่สมมาตร</div></div>
+          <div class="pro-metric"><div class="val">${m.coronalShift===null?'—':m.coronalShift.toFixed(1)+'%'}</div><div class="lbl">แนวลำตัวเบี่ยง</div></div>
+          <div class="pro-metric"><div class="val">${m.headTiltAngle===null?'—':m.headTiltAngle.toFixed(1)+'°'}</div><div class="lbl">ศีรษะเอียงจากแนวดิ่ง</div></div>
+          <div class="pro-metric"><div class="val">${backAsymAvg===null?'—':backAsymAvg.toFixed(1)+'%'}</div><div class="lbl">ไม่สมมาตรเฉลี่ยตลอดแนวหลัง</div></div>
+          <div class="pro-metric"><div class="val">${backAsymPeak===null?'—':backAsymPeak.toFixed(1)+'%'}</div><div class="lbl">จุดไม่สมมาตรสูงสุดบนหลัง</div></div>
+          <div class="pro-metric"><div class="val">${m.trunkAngle.toFixed(1)}°</div><div class="lbl">มุมเอียงสูงสุด</div></div>
+        </div>` : ''}
+        <div class="sheet-actions">
+          <button class="btn secondary block" id="rescan-btn">คัดกรองใหม่</button>
+          <button class="btn block" id="save-btn">บันทึกผล</button>
+        </div>
+      </div>
+    </div>`;
+  }
+  if(S.historyOpen){
+    const sorted = [...S.cases].sort((a,b)=>b.date-a.date);
+    html += `
+    <div class="modal-bg" id="hist-bg">
+      <div class="result-sheet">
+        <div class="sheet-handle"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <h3 style="font-size:17px;">ประวัติการคัดกรอง</h3>
+          <button class="icon-btn" id="close-hist" style="width:32px;height:32px;">${I_CLOSE}</button>
+        </div>
+        ${sorted.length? sorted.map(c=>{ const info=riskInfo(c.risk);
+          return `<div class="hist-row"><div class="hist-left"><span class="hist-name">${escapeHtml(c.label||'รายการคัดกรอง')}</span><span class="hist-date">${fmtDate(c.date)}</span></div><span class="badge ${info.cls}">${info.label}</span></div>`;
+        }).join('') : `<div class="empty-state">${I_HISTORY}<div>ยังไม่มีประวัติการคัดกรอง</div></div>`}
+      </div>
+    </div>`;
+  }
+  if(S.authOpen){
+    const isSetup = !S.adminAuth;
+    html += `
+    <div class="modal-bg" id="auth-bg">
+      <div class="result-sheet">
+        <div class="sheet-handle"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <h3 style="font-size:17px;">${isSetup?'ตั้งค่ารหัสผ่านผู้ดูแลระบบ':'เข้าสู่ระบบบุคลากรทางการแพทย์'}</h3>
+          <button class="icon-btn" id="close-auth" style="width:32px;height:32px;">${I_CLOSE}</button>
+        </div>
+        ${isSetup? `
+        <p class="review-hint" style="display:block;">ยังไม่มีรหัสผ่านผู้ดูแลระบบสำหรับเว็บนี้ กรุณาตั้งรหัสผ่านหนึ่งชุดสำหรับบุคลากรทางการแพทย์ทุกคนใช้ร่วมกันในการปรับเกณฑ์การประเมิน</p>
+        <label style="font-size:12.5px;color:var(--ink-soft);display:block;margin-top:14px;">รหัสผ่านใหม่ (อย่างน้อย 6 ตัวอักษร)</label>
+        <input type="password" id="auth-p1" style="width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:11px;font-family:inherit;font-size:14px;margin-top:6px;">
+        <label style="font-size:12.5px;color:var(--ink-soft);display:block;margin-top:12px;">ยืนยันรหัสผ่านอีกครั้ง</label>
+        <input type="password" id="auth-p2" style="width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:11px;font-family:inherit;font-size:14px;margin-top:6px;">
+        ` : `
+        <label style="font-size:12.5px;color:var(--ink-soft);display:block;margin-top:10px;">รหัสผ่านผู้ดูแลระบบ</label>
+        <input type="password" id="auth-p1" style="width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:11px;font-family:inherit;font-size:14px;margin-top:6px;">
+        `}
+        ${S.authError? `<p style="color:var(--risk);font-size:12.5px;margin-top:10px;">${escapeHtml(S.authError)}</p>`:''}
+        <p style="font-size:11px;color:var(--ink-faint);line-height:1.7;margin-top:14px;">หมายเหตุ: ระบบนี้เป็นเว็บฝั่งไคลเอนต์ล้วน (ไม่มีเซิร์ฟเวอร์แยก) รหัสผ่านนี้จึงเป็นเพียงการป้องกันเบื้องต้นไม่ให้ผู้ใช้ทั่วไปแก้ไขเกณฑ์โดยไม่ตั้งใจ ไม่ใช่ระบบความปลอดภัยระดับองค์กร โปรดอย่าใช้รหัสผ่านเดียวกับบัญชีสำคัญอื่น</p>
+        <div class="sheet-actions">
+          <button class="btn block" id="auth-submit">${isSetup?'สร้างรหัสผ่านและเข้าสู่ระบบ':'เข้าสู่ระบบ'}</button>
+        </div>
+      </div>
+    </div>`;
+  }
+  if(S.adminOpen){
+    const s = S.settings;
+    html += `
+    <div class="modal-bg" id="admin-bg">
+      <div class="result-sheet">
+        <div class="sheet-handle"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <h3 style="font-size:17px;">หลังบ้าน: ตั้งค่าเกณฑ์ทางคลินิก</h3>
+          <button class="icon-btn" id="close-admin" style="width:32px;height:32px;">${I_CLOSE}</button>
+        </div>
+        <p style="font-size:12px;color:var(--ink-faint);line-height:1.7;">ค่านี้เป็นข้อมูลที่ใช้ร่วมกันโดยผู้ใช้งานทุกคนของเว็บนี้ การเปลี่ยนแปลงจะมีผลกับทุกคนที่คัดกรองหลังจากนี้ทันที</p>
+        <label style="font-size:12.5px;color:var(--ink-soft);display:block;margin-top:14px;">มุมเอียง — เฝ้าระวัง (องศา)</label>
+        <input type="number" id="set-angleAmber" value="${s.angleAmber}" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;margin-top:5px;">
+        <label style="font-size:12.5px;color:var(--ink-soft);display:block;margin-top:12px;">มุมเอียง — ควรส่งต่อ (องศา)</label>
+        <input type="number" id="set-angleRed" value="${s.angleRed}" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;margin-top:5px;">
+        <label style="font-size:12.5px;color:var(--ink-soft);display:block;margin-top:12px;">ความไม่สมมาตร — เฝ้าระวัง (%)</label>
+        <input type="number" id="set-asymAmber" value="${s.asymAmber}" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;margin-top:5px;">
+        <label style="font-size:12.5px;color:var(--ink-soft);display:block;margin-top:12px;">ความไม่สมมาตร — ควรส่งต่อ (%)</label>
+        <input type="number" id="set-asymRed" value="${s.asymRed}" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;margin-top:5px;">
+        <label style="font-size:12.5px;color:var(--ink-soft);display:block;margin-top:12px;">แนวลำตัวเบี่ยง — เฝ้าระวัง (%)</label>
+        <input type="number" id="set-shiftAmber" value="${s.shiftAmber}" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;margin-top:5px;">
+        <label style="font-size:12.5px;color:var(--ink-soft);display:block;margin-top:12px;">แนวลำตัวเบี่ยง — ควรส่งต่อ (%)</label>
+        <input type="number" id="set-shiftRed" value="${s.shiftRed}" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;margin-top:5px;">
+        <div class="sheet-actions">
+          <button class="btn secondary block" id="admin-logout">ออกจากระบบ</button>
+          <button class="btn block" id="admin-save">บันทึกเกณฑ์</button>
+        </div>
+      </div>
+    </div>`;
+  }
+  el.innerHTML = html;
+
+  if(S.cameraOpen){
+    const video = document.getElementById('camera-video');
+    if(video && S.cameraStream && video.srcObject !== S.cameraStream){
+      video.srcObject = S.cameraStream;
+      video.play().catch(()=>{});
+    }
+    document.getElementById('camera-close').onclick = ()=>{ stopCameraStream(); renderOverlays(); };
+    document.getElementById('camera-flip').onclick = ()=>flipCamera();
+    document.getElementById('camera-shutter').onclick = (e)=>{
+      const btn = e.currentTarget; if(btn.disabled) return; btn.disabled = true;
+      captureFromCamera();
+    };
+  }
+  if(S.resultOpen){
+    document.getElementById('result-bg').onclick = (e)=>{ if(e.target.id==='result-bg'){ S.resultOpen=false; renderOverlays(); } };
+    document.getElementById('pro-switch').onclick = ()=>{ S.proMode=!S.proMode; renderOverlays(); };
+    document.getElementById('rescan-btn').onclick = ()=>{ S.resultOpen=false; S.current=null; S.view='home'; render(); };
+    document.getElementById('save-btn').onclick = async (e)=>{
+      const btn = e.currentTarget; if(btn.disabled) return; btn.disabled = true;
+      try{
+        const m = computeMetrics(S.current.points);
+        const full = { ...S.current, metrics:m, risk:m.risk, label:'คัดกรองเมื่อ '+new Date(S.current.date).toLocaleDateString('th-TH',{day:'numeric',month:'short'}) };
+        await saveCaseFull(full);
+        S.cases.push({ id:full.id, date:full.date, risk:m.risk, label:full.label });
+        await saveIndex();
+        S.resultOpen=false; S.current=null; S.view='home'; render();
+      }catch(err){
+        console.error(err); btn.disabled=false;
+        alert('บันทึกผลไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+      }
+    };
+  }
+  if(S.historyOpen){
+    document.getElementById('hist-bg').onclick = (e)=>{ if(e.target.id==='hist-bg'){ S.historyOpen=false; renderOverlays(); } };
+    document.getElementById('close-hist').onclick = ()=>{ S.historyOpen=false; renderOverlays(); };
+  }
+  if(S.authOpen){
+    const isSetup = !S.adminAuth;
+    document.getElementById('auth-bg').onclick = (e)=>{ if(e.target.id==='auth-bg'){ S.authOpen=false; renderOverlays(); } };
+    document.getElementById('close-auth').onclick = ()=>{ S.authOpen=false; renderOverlays(); };
+    document.getElementById('auth-submit').onclick = async (e)=>{
+      const btn = e.currentTarget; if(btn.disabled) return; btn.disabled = true;
+      try{
+        if(!window.crypto || !window.crypto.subtle) throw new Error('no-subtle-crypto');
+        const p1 = document.getElementById('auth-p1').value;
+        if(isSetup){
+          const p2 = document.getElementById('auth-p2').value;
+          if(p1.length<6){ S.authError='รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร'; btn.disabled=false; renderOverlays(); return; }
+          if(p1!==p2){ S.authError='รหัสผ่านทั้งสองช่องไม่ตรงกัน'; btn.disabled=false; renderOverlays(); return; }
+          const salt = randomSaltHex();
+          const hash = await hashPassword(p1, salt);
+          await saveAdminAuth({ salt, hash });
+          S.isAdmin = true; S.authOpen=false; S.authError=''; S.adminOpen=true;
+          render();
+        }else{
+          const hash = await hashPassword(p1, S.adminAuth.salt);
+          if(hash===S.adminAuth.hash){ S.isAdmin=true; S.authOpen=false; S.authError=''; S.adminOpen=true; render(); }
+          else{ S.authError='รหัสผ่านไม่ถูกต้อง'; btn.disabled=false; renderOverlays(); }
+        }
+      }catch(err){
+        console.error(err); btn.disabled=false;
+        S.authError = 'ไม่สามารถประมวลผลรหัสผ่านได้ในเบราว์เซอร์นี้ (ต้องเปิดผ่าน HTTPS)'; renderOverlays();
+      }
+    };
+  }
+  if(S.adminOpen){
+    document.getElementById('admin-bg').onclick = (e)=>{ if(e.target.id==='admin-bg'){ S.adminOpen=false; renderOverlays(); } };
+    document.getElementById('close-admin').onclick = ()=>{ S.adminOpen=false; renderOverlays(); };
+    document.getElementById('admin-logout').onclick = ()=>{ S.isAdmin=false; S.adminOpen=false; render(); };
+    document.getElementById('admin-save').onclick = async (e)=>{
+      const btn = e.currentTarget; if(btn.disabled) return; btn.disabled = true;
+      S.settings.angleAmber = parseFloat(document.getElementById('set-angleAmber').value) || S.settings.angleAmber;
+      S.settings.angleRed = parseFloat(document.getElementById('set-angleRed').value) || S.settings.angleRed;
+      S.settings.asymAmber = parseFloat(document.getElementById('set-asymAmber').value) || S.settings.asymAmber;
+      S.settings.asymRed = parseFloat(document.getElementById('set-asymRed').value) || S.settings.asymRed;
+      S.settings.shiftAmber = parseFloat(document.getElementById('set-shiftAmber').value) || S.settings.shiftAmber;
+      S.settings.shiftRed = parseFloat(document.getElementById('set-shiftRed').value) || S.settings.shiftRed;
+      try{
+        await saveClinicalSettings();
+        alert('บันทึกเกณฑ์เรียบร้อย มีผลกับการคัดกรองครั้งถัดไปทันที');
+      }catch(err){
+        console.error(err);
+        alert('บันทึกไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่');
+      }
+      btn.disabled = false;
+    };
+  }
+}
+
+function escapeHtml(s){ return String(s??'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+(async function init(){ await loadIndex(); await loadClinicalSettings(); await loadAdminAuth(); render(); })();
+</script>
+</body>
+</html>
